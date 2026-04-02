@@ -1,0 +1,132 @@
+import * as React from 'react';
+import { SxProps } from '@mui/system';
+import { Theme } from "../styles/index.js";
+import { OverridableComponent, OverrideProps } from "../OverridableComponent/index.js";
+import { ListItemClasses } from "./listItemClasses.js";
+import { SlotProps } from "../utils/types.js";
+export interface ListItemComponentsPropsOverrides {}
+export interface ListItemSecondaryActionSlotPropsOverrides {}
+
+/**
+ * This type is kept for compatibility. Use `ListItemOwnProps` instead.
+ */
+export interface ListItemBaseProps {
+  /**
+   * Defines the `align-items` style property.
+   * @default 'center'
+   */
+  alignItems?: 'flex-start' | 'center' | undefined;
+  /**
+   * The content of the component if a `ListItemSecondaryAction` is used it must
+   * be the last child.
+   */
+  children?: React.ReactNode;
+  /**
+   * Override or extend the styles applied to the component.
+   */
+  classes?: Partial<ListItemClasses> | undefined;
+  /**
+   * The container component used when a `ListItemSecondaryAction` is the last child.
+   * @default 'li'
+   * @deprecated Use the `component` or `slots.root` prop instead. This prop will be removed in a future major release. See [Migrating from deprecated APIs](https://mui.com/material-ui/migration/migrating-from-deprecated-apis/) for more details.
+   */
+  ContainerComponent?: React.ElementType<React.HTMLAttributes<HTMLDivElement>> | undefined;
+  /**
+   * Props applied to the container component if used.
+   * @default {}
+   * @deprecated Use the `slotProps.root` prop instead. This prop will be removed in a future major release. See [Migrating from deprecated APIs](https://mui.com/material-ui/migration/migrating-from-deprecated-apis/) for more details.
+   */
+  ContainerProps?: React.HTMLAttributes<HTMLDivElement> | undefined;
+  /**
+   * If `true`, compact vertical padding designed for keyboard and mouse input is used.
+   * The prop defaults to the value inherited from the parent List component.
+   * @default false
+   */
+  dense?: boolean | undefined;
+  /**
+   * If `true`, the left and right padding is removed.
+   * @default false
+   */
+  disableGutters?: boolean | undefined;
+  /**
+   * If `true`, all padding is removed.
+   * @default false
+   */
+  disablePadding?: boolean | undefined;
+  /**
+   * If `true`, a 1px light border is added to the bottom of the list item.
+   * @default false
+   */
+  divider?: boolean | undefined;
+  /**
+   * The element to display at the end of ListItem.
+   */
+  secondaryAction?: React.ReactNode;
+  /**
+   * The system prop that allows defining system overrides as well as additional CSS styles.
+   */
+  sx?: SxProps<Theme> | undefined;
+}
+export interface ListItemOwnerState extends Omit<ListItemProps, 'slots' | 'slotProps'> {}
+export interface ListItemOwnProps extends ListItemBaseProps {
+  /**
+   * The components used for each slot inside.
+   *
+   * @deprecated Use the `slots` prop instead. This prop will be removed in a future major release. See [Migrating from deprecated APIs](https://mui.com/material-ui/migration/migrating-from-deprecated-apis/) for more details.
+   * @default {}
+   */
+  components?: {
+    Root?: React.ElementType | undefined;
+  } | undefined;
+  /**
+   * The extra props for the slot components.
+   * You can override the existing props or add new ones.
+   *
+   * @deprecated Use the `slotProps` prop instead. This prop will be removed in a future major release. See [Migrating from deprecated APIs](https://mui.com/material-ui/migration/migrating-from-deprecated-apis/) for more details.
+   * @default {}
+   */
+  componentsProps?: {
+    root?: (React.HTMLAttributes<HTMLDivElement> & ListItemComponentsPropsOverrides) | undefined;
+  } | undefined;
+  /**
+   * The extra props for the slot components.
+   * You can override the existing props or add new ones.
+   *
+   * @default {}
+   */
+  slotProps?: {
+    root?: (React.HTMLAttributes<HTMLDivElement> & ListItemComponentsPropsOverrides) | undefined;
+    secondaryAction?: SlotProps<React.ElementType<React.HTMLAttributes<HTMLDivElement>>, ListItemSecondaryActionSlotPropsOverrides, ListItemOwnerState> | undefined;
+  } | undefined;
+  /**
+   * The components used for each slot inside.
+   *
+   * @default {}
+   */
+  slots?: {
+    root?: React.ElementType | undefined;
+    secondaryAction?: React.ElementType | undefined;
+  } | undefined;
+}
+export interface ListItemTypeMap<AdditionalProps, RootComponent extends React.ElementType> {
+  props: AdditionalProps & ListItemOwnProps;
+  defaultComponent: RootComponent;
+}
+
+/**
+ * Uses an additional container component if `ListItemSecondaryAction` is the last child.
+ *
+ * Demos:
+ *
+ * - [Lists](https://mui.com/material-ui/react-list/)
+ * - [Transfer List](https://mui.com/material-ui/react-transfer-list/)
+ *
+ * API:
+ *
+ * - [ListItem API](https://mui.com/material-ui/api/list-item/)
+ */
+declare const ListItem: OverridableComponent<ListItemTypeMap<{}, 'li'>>;
+export type ListItemProps<RootComponent extends React.ElementType = 'li', AdditionalProps = {}> = OverrideProps<ListItemTypeMap<AdditionalProps, RootComponent>, RootComponent> & {
+  component?: React.ElementType | undefined;
+};
+export default ListItem;
