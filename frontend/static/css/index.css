@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    color: White;
+    background-color: #1e1e1e;
+}
+
+#main{
+    position:fixed;
+    width:100%;
+    height:100%;
+    left:0;
+    top:0;
+}
+
+#app{
+    width:100%;
+    height:100%;
+    display:flex;
+}
