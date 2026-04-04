@@ -12,7 +12,7 @@ function Room() {
     fetch("/api/get-room?code=" + roomCode)
       .then((response) => {
         if (!response.ok) {
-          navigate("/"); 
+          navigate("/");
           return;
         }
         return response.json();

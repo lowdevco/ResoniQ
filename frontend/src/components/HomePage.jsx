@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react";
 
 function HomePage() {
   return (
@@ -8,4 +8,4 @@ function HomePage() {
   );
 }
 
-export default HomePage
+export default HomePage;
