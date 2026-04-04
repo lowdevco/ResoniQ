@@ -23,8 +23,8 @@ class CreateRoomView(APIView):
 
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            guest_can_pause = serializer.data.get('guest_can_pause')
-            vote_to_skip = serializer.data.get('vote_to_skip')
+            guest_can_pause = serializer.data.get('guest_can_pause', True)
+            vote_to_skip = serializer.data.get('vote_to_skip', 2)
             host = self.request.session.session_key
             queryset = Room.objects.filter(host=host)
             if queryset.exists():
@@ -38,3 +38,25 @@ class CreateRoomView(APIView):
                             vote_to_skip=vote_to_skip)
                 room.save()
                 return Response(Roomserializers(room).data, status=status.HTTP_201_CREATED)
+
+
+class GetRoomView(APIView):           
+    def get(self, request, format=None):
+        code = request.GET.get('code')
+        if code is None:
+            return Response(
+                {'error': 'Code not provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        queryset = Room.objects.filter(code=code)
+        if not queryset.exists():
+            return Response(
+                {'error': 'Room not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        room = queryset[0]
+        data = Roomserializers(room).data
+        data['is_host'] = self.request.session.session_key == room.host
+        return Response(data, status=status.HTTP_200_OK)
