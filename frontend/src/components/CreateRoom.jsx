@@ -128,7 +128,7 @@ function CreateRoom({
           {update ? "Update Room" : "Create A Room"}
         </button>
 
-        {/* Back Button shows up for Host  */}
+        {/* Back Button shows up Only for Host  */}
 
         {!update && (
           <Link
