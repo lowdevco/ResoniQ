@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import CreateRoom from "./CreateRoom";
+import MusicSearch from "./MusicSearch";
 
 function Room() {
   const { roomCode } = useParams();
@@ -44,8 +45,7 @@ function Room() {
       });
   };
 
-  // Settings Room view
-
+  // Settings view
   if (showSettings) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white px-4">
@@ -72,48 +72,62 @@ function Room() {
   // Main room view
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white px-4">
-      <div className="bg-gray-800 rounded-2xl shadow-lg p-10 w-full max-w-md flex flex-col gap-4">
-        <h2 className="text-3xl font-bold text-center">
-          Room: <span className="text-blue-400">{roomCode}</span>
-        </h2>
+    <div className="min-h-screen bg-gray-900 text-white px-4 py-10">
+      <div className="max-w-4xl mx-auto flex flex-col gap-6">
 
-        <div className="bg-gray-700 rounded-lg p-4 flex flex-col gap-3">
-          <p className="text-gray-300">
-            Votes to Skip:{" "}
-            <span className="text-white font-semibold">{voteToSkip}</span>
-          </p>
-          <p className="text-gray-300">
-            Guest Can Pause:{" "}
-            <span className="text-white font-semibold">
-              {guestCanPause.toString()}
-            </span>
-          </p>
-          <p className="text-gray-300">
-            Host:{" "}
-            <span className="text-white font-semibold">
-              {isHost.toString()}
-            </span>
-          </p>
+        {/* Room Info Card */}
+
+        <div className="bg-gray-800 rounded-2xl shadow-lg p-8 flex flex-col gap-4">
+          <h2 className="text-3xl font-bold text-center">
+            Room: <span className="text-blue-400">{roomCode}</span>
+          </h2>
+
+          <div className="bg-gray-700 rounded-lg p-4 flex flex-col gap-3">
+            <p className="text-gray-300">
+              Votes to Skip:{" "}
+              <span className="text-white font-semibold">{voteToSkip}</span>
+            </p>
+            <p className="text-gray-300">
+              Guest Can Pause:{" "}
+              <span className="text-white font-semibold">
+                {guestCanPause.toString()}
+              </span>
+            </p>
+            <p className="text-gray-300">
+              Host:{" "}
+              <span className="text-white font-semibold">
+                {isHost.toString()}
+              </span>
+            </p>
+          </div>
+
+          <div className="flex gap-3">
+            {isHost && (
+              <button
+                onClick={() => setShowSettings(true)}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+              >
+                Settings
+              </button>
+            )}
+            <button
+              onClick={leaveRoom}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+            >
+              Leave Room
+            </button>
+          </div>
         </div>
 
-        {/* Shows up only for HOST  */}
+        {/* Music Search */}
 
-        {isHost && (
-          <button
-            onClick={() => setShowSettings(true)}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
-          >
-            Settings
-          </button>
-        )}
-
-        <button
-          onClick={leaveRoom}
-          className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
-        >
-          Leave Room
-        </button>
+        
+        <div className="bg-gray-800 rounded-2xl shadow-lg p-6 w-full">
+          <h3 className="text-white font-bold text-xl mb-4">
+            Search Music
+          </h3>
+          <MusicSearch />
+        </div>
       </div>
     </div>
   );
