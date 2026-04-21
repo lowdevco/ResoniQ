@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import CreateRoom from "./CreateRoom";
 import MusicSearch from "./MusicSearch";
+import useRoom from "./Hook/UseRoom.js";
 
 function Room() {
   const { roomCode } = useParams();
@@ -10,6 +11,9 @@ function Room() {
   const [guestCanPause, setGuestCanPause] = useState(false);
   const [isHost, setIsHost] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+
+  const { userCount, syncedTrack, syncedTime, syncedIsPlaying, sendMessage } =
+    useRoom(roomCode);
 
   useEffect(() => {
     getRoomDetails();
@@ -40,12 +44,9 @@ function Room() {
     };
     fetch("/api/leave-room", requestOptions)
       .then((response) => response.json())
-      .then(() => {
-        navigate("/");
-      });
+      .then(() => navigate("/"));
   };
 
-  // Settings view
   if (showSettings) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white px-4">
@@ -69,18 +70,26 @@ function Room() {
     );
   }
 
-  // Main room view
-
   return (
     <div className="min-h-screen bg-gray-900 text-white px-4 py-10">
       <div className="max-w-4xl mx-auto flex flex-col gap-6">
-
         {/* Room Info Card */}
-
         <div className="bg-gray-800 rounded-2xl shadow-lg p-8 flex flex-col gap-4">
-          <h2 className="text-3xl font-bold text-center">
-            Room: <span className="text-blue-400">{roomCode}</span>
-          </h2>
+          {/* Room header with user count */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-3xl font-bold">
+              Room: <span className="text-blue-400">{roomCode}</span>
+            </h2>
+
+            {/*   user count */}
+            <div className="flex items-center gap-2 bg-gray-700 px-4 py-2 rounded-full">
+              <span className="text-green-400 text-lg">👥</span>
+              <span className="text-white font-semibold">{userCount}</span>
+              <span className="text-gray-400 text-sm">
+                {userCount === 1 ? "listener" : "listeners"}
+              </span>
+            </div>
+          </div>
 
           <div className="bg-gray-700 rounded-lg p-4 flex flex-col gap-3">
             <p className="text-gray-300">
@@ -119,14 +128,17 @@ function Room() {
           </div>
         </div>
 
-        {/* Music Search */}
-
-        
+        {/* Music Search with WebSocket syncing */}
         <div className="bg-gray-800 rounded-2xl shadow-lg p-6 w-full">
-          <h3 className="text-white font-bold text-xl mb-4">
-            Search Music
-          </h3>
-          <MusicSearch />
+          <h3 className="text-white font-bold text-xl mb-4">🎵 Search Music</h3>
+          <MusicSearch
+            sendMessage={sendMessage}
+            syncedTrack={syncedTrack}
+            syncedTime={syncedTime}
+            syncedIsPlaying={syncedIsPlaying}
+            isHost={isHost}
+            guestCanPause={guestCanPause}
+          />
         </div>
       </div>
     </div>
