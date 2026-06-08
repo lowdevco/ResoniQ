@@ -1,1 +1,0 @@
-export default function isLayoutSupported(): boolean;
