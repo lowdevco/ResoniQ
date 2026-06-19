@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { apiFetch } from "../api";
 
 function HomePage() {
   const [roomCode, setRoomCode] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("/api/user-in-room")
+    apiFetch("/api/user-in-room")
       .then((response) => response.json())
       .then((data) => {
         if (data.code) {

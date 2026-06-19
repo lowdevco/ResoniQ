@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FaPlay, FaPause, FaRedo, FaStop } from "react-icons/fa";
+import { apiFetch } from "../api";
 
 function MusicSearch({
   sendMessage,
@@ -66,7 +67,7 @@ function MusicSearch({
   const searchSongs = () => {
     if (query.trim() === "") return;
     setLoading(true);
-    fetch(`/music/search?q=${query}`)
+    apiFetch(`/music/search?q=${query}`)
       .then((response) => response.json())
       .then((data) => {
         setTracks(data);

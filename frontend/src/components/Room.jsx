@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import CreateRoom from "./CreateRoom";
 import MusicSearch from "./MusicSearch";
 import useRoom from "./Hook/UseRoom.js";
+import { apiFetch } from "../api";
 
 function Room() {
   const { roomCode } = useParams();
@@ -20,7 +21,7 @@ function Room() {
   }, [roomCode]);
 
   const getRoomDetails = () => {
-    fetch("/api/get-room?code=" + roomCode)
+    apiFetch("/api/get-room?code=" + roomCode)
       .then((response) => {
         if (!response.ok) {
           leaveRoom();
@@ -42,7 +43,7 @@ function Room() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
     };
-    fetch("/api/leave-room", requestOptions)
+    apiFetch("/api/leave-room", requestOptions)
       .then((response) => response.json())
       .then(() => navigate("/"));
   };

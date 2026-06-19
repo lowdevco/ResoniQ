@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { WS_BASE_URL } from "../../config";
 
 function useRoom(roomCode) {
   const ws = useRef(null);
@@ -8,7 +9,9 @@ function useRoom(roomCode) {
   const [syncedIsPlaying, setSyncedIsPlaying] = useState(false);
 
   useEffect(() => {
-    ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/room/${roomCode}/`);
+    // Construct WebSocket URL using base URL (handling ws:// vs wss://)
+    const baseWsUrl = WS_BASE_URL.replace(/^http/, "ws");
+    ws.current = new WebSocket(`${baseWsUrl}/ws/room/${roomCode}/`);
 
     ws.current.onopen = () => {
       console.log("Room WebSocket connected ✅");
