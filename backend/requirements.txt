@@ -1,0 +1,8 @@
+Django>=5.0
+daphne
+channels
+channels_redis
+djangorestframework
+whitenoise
+python-dotenv
+django-cors-headers

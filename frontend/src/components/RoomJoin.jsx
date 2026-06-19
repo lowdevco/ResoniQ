@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { apiFetch } from "../api";
 
 function RoomJoin() {
   const [roomCode, setRoomCode] = useState("");
@@ -25,7 +26,7 @@ function RoomJoin() {
         code: roomCode,
       }),
     };
-    fetch("/api/join-room", requestOptions)
+    apiFetch("/api/join-room", requestOptions)
       .then((response) => {
         if (response.ok) {
           navigate(`/room/${roomCode}`);

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { apiFetch } from "../api";
 
 const DEFAULT_VOTE_TO_SKIP = 2;
 
@@ -33,7 +34,7 @@ function CreateRoom({
         guest_can_pause: guestCanPauseState,
       }),
     };
-    fetch("/api/create-room", requestOptions)
+    apiFetch("/api/create-room", requestOptions)
       .then((response) => response.json())
       .then((data) => {
         navigate(`/room/${data.code}`);
@@ -50,7 +51,7 @@ function CreateRoom({
         code: roomCode,
       }),
     };
-    fetch("/api/update-room", requestOptions).then((response) => {
+    apiFetch("/api/update-room", requestOptions).then((response) => {
       if (response.ok) {
         setSuccessMsg("Room updated successfully!");
         setErrorMsg("");
