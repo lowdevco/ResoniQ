@@ -26,27 +26,27 @@ SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
-DEBUG = config('DEBUG', cast=bool)
+DEBUG = config('DEBUG', cast=bool, default=False)
 
 ALLOWED_HOSTS = config(
     "ALLOWED_HOSTS",
-    cast=lambda v: [host.strip() for host in v.split(",")],
-    default="127.0.0.1,localhost"
+    cast=lambda v: [host.strip() for host in v.split(",") if host.strip()],
+    default="127.0.0.1,localhost,resoniq.onrender.com,.onrender.com"
 )
 
 CSRF_TRUSTED_ORIGINS = config(
     "CSRF_TRUSTED_ORIGINS",
-    cast=lambda v: [origin.strip() for origin in v.split(",")],
-    default=""
+    cast=lambda v: [origin.strip() for origin in v.split(",") if origin.strip()],
+    default="http://localhost:5173,http://127.0.0.1:5173,https://resoniq-music.vercel.app"
 )
 
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
-    cast=lambda v: [origin.strip() for origin in v.split(",")],
-    default=""
+    cast=lambda v: [origin.strip() for origin in v.split(",") if origin.strip()],
+    default="http://localhost:5173,http://127.0.0.1:5173,https://resoniq-music.vercel.app"
 )
 
-CORS_ALLOW_CREDENTIALS = config('CORS_ALLOW_CREDENTIALS', cast=bool)
+CORS_ALLOW_CREDENTIALS = config('CORS_ALLOW_CREDENTIALS', cast=bool, default=True)
 
 # Application definition
 
@@ -67,8 +67,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -152,5 +152,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# No Options For Staic File Uploads
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}

@@ -9,7 +9,6 @@ function useRoom(roomCode) {
   const [syncedIsPlaying, setSyncedIsPlaying] = useState(false);
 
   useEffect(() => {
-    // Construct WebSocket URL using base URL (handling ws:// vs wss://)
     const baseWsUrl = WS_BASE_URL.replace(/^http/, "ws");
     ws.current = new WebSocket(`${baseWsUrl}/ws/room/${roomCode}/`);
 
@@ -27,7 +26,7 @@ function useRoom(roomCode) {
       }
 
       if (data.type === "update_user_count") {
-        setUserCount(data.count); 
+        setUserCount(data.count);
       }
     };
 

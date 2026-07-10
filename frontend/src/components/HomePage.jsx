@@ -8,12 +8,10 @@ function HomePage() {
   const [activeTab, setActiveTab] = useState("join");
   const navigate = useNavigate();
 
-  // Join States
   const [joinCode, setJoinCode] = useState("");
   const [joinError, setJoinError] = useState("");
   const [joinLoading, setJoinLoading] = useState(false);
 
-  // Create States
   const [guestCanPause, setGuestCanPause] = useState(true);
   const [voteToSkip, setVoteToSkip] = useState(2);
   const [createLoading, setCreateLoading] = useState(false);
@@ -77,13 +75,9 @@ function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#080808] text-white flex flex-col justify-between p-6 md:p-12 overflow-y-auto">
-      {/* Top spacing / invisible helper */}
       <div className="hidden md:block"></div>
 
-      {/* Main Centered Content */}
       <div className="w-full max-w-md mx-auto flex flex-col items-center gap-8 py-8">
-        
-        {/* Brand Header */}
         <div className="flex flex-col items-center gap-3 text-center">
           <div className="bg-brand text-white rounded-full p-3 flex items-center justify-center shadow-lg shadow-brand/10 animate-pulse-slow">
             <FaMusic className="text-2xl" />
@@ -98,10 +92,7 @@ function HomePage() {
           </div>
         </div>
 
-        {/* Centered Tabbed Form Box */}
         <div className="bg-[#121212] border border-white/[0.06] rounded-2xl p-8 flex flex-col gap-6 shadow-2xl w-full">
-          
-          {/* Tab switch buttons */}
           <div className="flex bg-[#0b0b0b] p-1 rounded-full border border-white/[0.04]">
             <button
               onClick={() => setActiveTab("join")}
@@ -125,7 +116,6 @@ function HomePage() {
             </button>
           </div>
 
-          {/* Tab: Join Room */}
           {activeTab === "join" && (
             <form onSubmit={handleJoin} className="flex flex-col gap-5">
               <div className="flex flex-col gap-2">
@@ -142,7 +132,9 @@ function HomePage() {
                   placeholder="e.g. AB12CD"
                   maxLength={10}
                   className={`w-full text-center bg-[#2a2a2a] border ${
-                    joinError ? "border-red-500 focus:border-red-500" : "border-transparent focus:border-white/10"
+                    joinError
+                      ? "border-red-500 focus:border-red-500"
+                      : "border-transparent focus:border-white/10"
                   } rounded-xl px-4 py-3 font-mono text-xl tracking-widest text-white placeholder-slate-600 uppercase focus:outline-none transition duration-150`}
                 />
                 {joinError && (
@@ -162,7 +154,6 @@ function HomePage() {
             </form>
           )}
 
-          {/* Tab: Create Room */}
           {activeTab === "create" && (
             <form onSubmit={handleCreate} className="flex flex-col gap-5">
               <div className="flex flex-col gap-2">
@@ -229,11 +220,9 @@ function HomePage() {
               </button>
             </form>
           )}
-          
         </div>
       </div>
 
-      {/* Footer System Features */}
       <footer className="text-center py-4 flex items-center justify-center gap-4 text-[10px] uppercase tracking-wider text-[#737373] font-bold select-none">
         <span>Real-Time Sync</span>
         <span className="text-white/10">•</span>

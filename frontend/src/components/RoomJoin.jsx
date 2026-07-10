@@ -46,8 +46,12 @@ function RoomJoin() {
         <div className="bg-[#121212] border border-white/[0.06] rounded-2xl p-8 flex flex-col gap-6 shadow-xl">
           <div className="text-center">
             <FaSignInAlt className="text-3xl text-brand mx-auto mb-2" />
-            <h2 className="text-3xl font-bold text-white tracking-tight">Join a Session</h2>
-            <p className="text-[#b3b3b3] text-sm mt-1">Enter a code to connect with listeners</p>
+            <h2 className="text-3xl font-bold text-white tracking-tight">
+              Join a Session
+            </h2>
+            <p className="text-[#b3b3b3] text-sm mt-1">
+              Enter a code to connect with listeners
+            </p>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -58,10 +62,16 @@ function RoomJoin() {
               onChange={handleTextFieldChange}
               maxLength={10}
               className={`w-full text-center spotify-input border ${
-                error ? "border-red-500 focus:border-red-500" : "border-transparent"
+                error
+                  ? "border-red-500 focus:border-red-500"
+                  : "border-transparent"
               } rounded-xl px-4 py-3 font-mono text-xl tracking-widest text-white placeholder-slate-600 uppercase focus:outline-none focus:ring-1 focus:ring-slate-500 transition duration-150`}
             />
-            {error && <p className="text-red-400 text-xs text-center font-medium mt-1">{error}</p>}
+            {error && (
+              <p className="text-red-400 text-xs text-center font-medium mt-1">
+                {error}
+              </p>
+            )}
           </div>
 
           <button

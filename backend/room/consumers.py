@@ -1,7 +1,6 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 
-# Track users per room
 room_users = {}
 
 
@@ -10,19 +9,16 @@ class RoomConsumer(AsyncWebsocketConsumer):
         self.room_code = self.scope['url_route']['kwargs']['room_code']
         self.room_group_name = f'room_{self.room_code}'
 
-        # Add to room group
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
         await self.accept()
 
-        # Track user count
         if self.room_code not in room_users:
             room_users[self.room_code] = 0
         room_users[self.room_code] += 1
 
-        # Broadcast updated count to everyone
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -32,11 +28,9 @@ class RoomConsumer(AsyncWebsocketConsumer):
         )
 
     async def disconnect(self, close_code):
-        # Decrease user count
         if self.room_code in room_users:
             room_users[self.room_code] = max(0, room_users[self.room_code] - 1)
 
-        # Broadcast updated count
         await self.channel_layer.group_send(
             self.room_group_name,
             {

@@ -7,14 +7,12 @@ class RoomConsumer(AsyncWebsocketConsumer):
         self.room_code = self.scope['url_route']['kwargs']['room_code']
         self.room_group_name = f'room_{self.room_code}'
 
-        # Join room group
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
         await self.accept()
 
-        # Notify everyone when  someone joins the room
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -24,8 +22,6 @@ class RoomConsumer(AsyncWebsocketConsumer):
         )
 
     async def disconnect(self, close_code):
-        # Notify everyone  when someone left the room 
-
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -44,7 +40,6 @@ class RoomConsumer(AsyncWebsocketConsumer):
         event_type = data.get('type')
 
         if event_type == 'music_sync':
-            # Broadcast music sync to all room members
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {

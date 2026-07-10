@@ -62,13 +62,19 @@ function CreateRoom({
   };
 
   const content = (
-    <div className={`flex flex-col gap-6 w-full ${update ? "" : "bg-[#181818] border border-[#282828] rounded-2xl p-8 max-w-md"}`}>
+    <div
+      className={`flex flex-col gap-6 w-full ${update ? "" : "bg-[#181818] border border-[#282828] rounded-2xl p-8 max-w-md"}`}
+    >
       <div className="text-center">
         {!update && <FaCrown className="text-3xl text-brand mx-auto mb-2" />}
         <h2 className="text-3xl font-bold text-white tracking-tight">
           {update ? "Session Settings" : "Host a Session"}
         </h2>
-        {!update && <p className="text-[#b3b3b3] text-sm mt-1">Configure room permissions and controls</p>}
+        {!update && (
+          <p className="text-[#b3b3b3] text-sm mt-1">
+            Configure room permissions and controls
+          </p>
+        )}
       </div>
 
       {successMsg && (
@@ -82,7 +88,6 @@ function CreateRoom({
         </p>
       )}
 
-      {/* Guest Playback Permissions Toggle Buttons */}
       <div className="flex flex-col gap-2">
         <label className="text-xs uppercase tracking-wider text-[#b3b3b3] font-bold mb-1">
           Guest Playback Control
@@ -116,7 +121,6 @@ function CreateRoom({
         </div>
       </div>
 
-      {/* Votes to Skip Slider */}
       <div className="flex flex-col gap-2">
         <div className="flex justify-between items-center">
           <label className="text-xs uppercase tracking-wider text-[#b3b3b3] font-bold">
@@ -171,9 +175,7 @@ function CreateRoom({
 
   return (
     <div className="relative min-h-screen bg-[#121212] text-white flex items-center justify-center p-6 overflow-hidden">
-      <div className="relative z-10 w-full flex justify-center">
-        {content}
-      </div>
+      <div className="relative z-10 w-full flex justify-center">{content}</div>
     </div>
   );
 }

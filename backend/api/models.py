@@ -10,8 +10,6 @@ def code_generator():
         if Room.objects.filter(code=code).count() == 0:
             return code 
 
-# Create your models here.
-
 class Room(models.Model):
     code = models.CharField(unique=True , default=code_generator , max_length=10)
     host = models.CharField( unique=True ,  max_length=50 )
