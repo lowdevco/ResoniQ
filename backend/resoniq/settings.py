@@ -32,13 +32,13 @@ ALLOWED_HOSTS = ["*"]
 
 CSRF_TRUSTED_ORIGINS = config(
     "CSRF_TRUSTED_ORIGINS",
-    cast=lambda v: [origin.strip() for origin in v.split(",") if origin.strip()],
+    cast=lambda v: [origin.strip().rstrip('/') for origin in v.split(",") if origin.strip()],
     default="http://localhost:5173,http://127.0.0.1:5173,https://resoniq-music.vercel.app"
 )
 
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
-    cast=lambda v: [origin.strip() for origin in v.split(",") if origin.strip()],
+    cast=lambda v: [origin.strip().rstrip('/') for origin in v.split(",") if origin.strip()],
     default="http://localhost:5173,http://127.0.0.1:5173,https://resoniq-music.vercel.app"
 )
 
