@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { FaCrown, FaLock, FaUnlock } from "react-icons/fa";
 import { apiFetch } from "../api";
 
 const DEFAULT_VOTE_TO_SKIP = 2;
@@ -18,11 +19,7 @@ function CreateRoom({
   const navigate = useNavigate();
 
   const handleVoteChange = (e) => {
-    setVoteToSkip(e.target.value);
-  };
-
-  const handleGuestCanPauseChange = (e) => {
-    setGuestCanPause(e.target.value === "true");
+    setVoteToSkip(parseInt(e.target.value));
   };
 
   const handleRoomButtonPressed = () => {
@@ -38,7 +35,8 @@ function CreateRoom({
       .then((response) => response.json())
       .then((data) => {
         navigate(`/room/${data.code}`);
-      });
+      })
+      .catch((err) => console.error("Error creating room:", err));
   };
 
   const handleUpdateButtonPressed = () => {
@@ -63,82 +61,118 @@ function CreateRoom({
     });
   };
 
-  return (
-    <div
-      className={`flex flex-col items-center gap-6 w-full ${!update ? "justify-center min-h-screen bg-gray-900 px-4" : ""}`}
-    >
-      <div className="bg-gray-800 rounded-2xl shadow-lg p-10 w-full max-w-md flex flex-col gap-6">
-        <h4 className="text-3xl font-bold text-center text-white">
-          {update ? "Update Room" : "Create A Room"}
-        </h4>
+  const content = (
+    <div className={`flex flex-col gap-6 w-full ${update ? "" : "bg-[#181818] border border-[#282828] rounded-2xl p-8 max-w-md"}`}>
+      <div className="text-center">
+        {!update && <FaCrown className="text-3xl text-brand mx-auto mb-2" />}
+        <h2 className="text-3xl font-bold text-white tracking-tight">
+          {update ? "Session Settings" : "Host a Session"}
+        </h2>
+        {!update && <p className="text-[#b3b3b3] text-sm mt-1">Configure room permissions and controls</p>}
+      </div>
 
-        {successMsg && (
-          <p className="text-green-400 text-sm text-center">{successMsg}</p>
-        )}
-        {errorMsg && (
-          <p className="text-red-400 text-sm text-center">{errorMsg}</p>
-        )}
+      {successMsg && (
+        <p className="text-green-400 text-xs text-center font-medium bg-green-500/10 border border-green-500/20 py-2.5 px-4 rounded-xl">
+          {successMsg}
+        </p>
+      )}
+      {errorMsg && (
+        <p className="text-red-400 text-xs text-center font-medium bg-red-500/10 border border-red-500/20 py-2.5 px-4 rounded-xl">
+          {errorMsg}
+        </p>
+      )}
 
-        <div className="flex flex-col items-center gap-2">
-          <p className="text-sm text-gray-400 text-center">
-            Guest Control of Playback State
-          </p>
-          <div className="flex gap-6">
-            <label className="flex flex-col items-center gap-1 cursor-pointer">
-              <input
-                type="radio"
-                name="guestCanPause"
-                value="true"
-                defaultChecked={guestCanPauseState}
-                onChange={handleGuestCanPauseChange}
-                className="accent-blue-500 w-4 h-4"
-              />
-              <span className="text-sm text-gray-300">Play/Pause</span>
-            </label>
-            <label className="flex flex-col items-center gap-1 cursor-pointer">
-              <input
-                type="radio"
-                name="guestCanPause"
-                value="false"
-                defaultChecked={!guestCanPauseState}
-                onChange={handleGuestCanPauseChange}
-                className="accent-red-500 w-4 h-4"
-              />
-              <span className="text-sm text-gray-300">No Control</span>
-            </label>
-          </div>
+      {/* Guest Playback Permissions Toggle Buttons */}
+      <div className="flex flex-col gap-2">
+        <label className="text-xs uppercase tracking-wider text-[#b3b3b3] font-bold mb-1">
+          Guest Playback Control
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setGuestCanPause(true)}
+            className={`flex flex-col p-3 rounded-xl border text-center transition duration-150 items-center justify-center focus:outline-none ${
+              guestCanPauseState
+                ? "bg-brand/10 border-brand text-white"
+                : "bg-[#2a2a2a] border-transparent text-[#b3b3b3] hover:border-white/10"
+            }`}
+          >
+            <FaUnlock className="text-lg mb-1" />
+            <span className="text-xs font-bold">Play / Pause</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setGuestCanPause(false)}
+            className={`flex flex-col p-3 rounded-xl border text-center transition duration-150 items-center justify-center focus:outline-none ${
+              !guestCanPauseState
+                ? "bg-brand/10 border-brand text-white"
+                : "bg-[#2a2a2a] border-transparent text-[#b3b3b3] hover:border-white/10"
+            }`}
+          >
+            <FaLock className="text-lg mb-1" />
+            <span className="text-xs font-bold">Host Only</span>
+          </button>
         </div>
+      </div>
 
-        <div className="flex flex-col items-center gap-2">
-          <input
-            type="number"
-            min="1"
-            defaultValue={voteToSkipState}
-            onChange={handleVoteChange}
-            className="w-24 text-center bg-gray-700 text-white border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <p className="text-sm text-gray-400 text-center">
-            Votes Required To Skip Song
-          </p>
+      {/* Votes to Skip Slider */}
+      <div className="flex flex-col gap-2">
+        <div className="flex justify-between items-center">
+          <label className="text-xs uppercase tracking-wider text-[#b3b3b3] font-bold">
+            Votes to Skip
+          </label>
+          <span className="bg-[#121212] px-2.5 py-0.5 rounded text-sm font-bold text-brand border border-[#282828]">
+            {voteToSkipState}
+          </span>
         </div>
+        <input
+          type="range"
+          min="1"
+          max="10"
+          value={voteToSkipState}
+          onChange={handleVoteChange}
+          className="w-full h-1 bg-[#535353] rounded-lg appearance-none cursor-pointer accent-brand"
+        />
+        <span className="text-[10px] text-[#b3b3b3] text-center">
+          Number of user votes required to skip the active song
+        </span>
+      </div>
 
-        <button
-          onClick={update ? handleUpdateButtonPressed : handleRoomButtonPressed}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
-        >
-          {update ? "Update Room" : "Create A Room"}
-        </button>
+      <button
+        onClick={update ? handleUpdateButtonPressed : handleRoomButtonPressed}
+        className="w-full bg-brand hover:bg-brand-hover text-white font-bold py-3.5 px-4 rounded-full hover:scale-105 active:scale-95 transition duration-150 focus:outline-none"
+      >
+        {update ? "Save Settings" : "Create Room"}
+      </button>
 
-        {/* Back Button shows up Only for Host  */}
-
-        {!update && (
+      {!update && (
+        <div className="flex flex-col gap-2 border-t border-[#282828] pt-4">
+          <Link
+            to="/join"
+            className="w-full text-center bg-transparent hover:bg-white/5 border border-[#535353] hover:border-white text-white font-bold py-2.5 px-4 rounded-full text-sm transition duration-150"
+          >
+            Join a Session instead
+          </Link>
           <Link
             to="/"
-            className="w-full text-center bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+            className="w-full text-center text-[#b3b3b3] hover:text-white font-semibold py-2 px-4 rounded-full text-sm transition duration-150"
           >
-            Back
+            Back to Home
           </Link>
-        )}
+        </div>
+      )}
+    </div>
+  );
+
+  if (update) {
+    return content;
+  }
+
+  return (
+    <div className="relative min-h-screen bg-[#121212] text-white flex items-center justify-center p-6 overflow-hidden">
+      <div className="relative z-10 w-full flex justify-center">
+        {content}
       </div>
     </div>
   );

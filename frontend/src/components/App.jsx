@@ -12,6 +12,7 @@ const App = () => {
       <Route path="/create" element={<CreateRoom />} />
       <Route path="/join" element={<RoomJoin />} />
       <Route path="/room/:roomCode" element={<Room />} />
+      <Route path="/room/:roomCode/settings" element={<Room />} />
     </Routes>
   );
 };
