@@ -9,6 +9,14 @@ from channels.auth import AuthMiddlewareStack
 
 django_asgi_app = get_asgi_application()
 
+from django.core.management import call_command
+try:
+    print("Running database migrations programmatically...")
+    call_command("migrate", interactive=False)
+    print("Database migrations applied successfully!")
+except Exception as e:
+    print(f"Error running migrations: {e}")
+
 from room import routing  # type: ignore
 
 application = ProtocolTypeRouter({
