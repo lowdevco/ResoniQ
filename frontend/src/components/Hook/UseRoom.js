@@ -10,7 +10,12 @@ function useRoom(roomCode) {
 
   useEffect(() => {
     const baseWsUrl = WS_BASE_URL.replace(/^http/, "ws");
-    ws.current = new WebSocket(`${baseWsUrl}/ws/room/${roomCode}/`);
+    let wsUrl = `${baseWsUrl}/ws/room/${roomCode}/`;
+    const parts = wsUrl.split("://");
+    if (parts.length === 2) {
+      wsUrl = parts[0] + "://" + parts[1].replace(/\/+/g, "/");
+    }
+    ws.current = new WebSocket(wsUrl);
 
     ws.current.onopen = () => {
       console.log("Room WebSocket connected ✅");
