@@ -32,17 +32,20 @@ ALLOWED_HOSTS = ["*"]
 
 CSRF_TRUSTED_ORIGINS = config(
     "CSRF_TRUSTED_ORIGINS",
-    cast=lambda v: [origin.strip().rstrip('/') for origin in v.split(",") if origin.strip()],
+    cast=lambda v: [origin.strip().rstrip('/')
+                    for origin in v.split(",") if origin.strip()],
     default="http://localhost:5173,http://127.0.0.1:5173,https://resoniq-music.vercel.app"
 )
 
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
-    cast=lambda v: [origin.strip().rstrip('/') for origin in v.split(",") if origin.strip()],
+    cast=lambda v: [origin.strip().rstrip('/')
+                    for origin in v.split(",") if origin.strip()],
     default="http://localhost:5173,http://127.0.0.1:5173,https://resoniq-music.vercel.app"
 )
 
-CORS_ALLOW_CREDENTIALS = config('CORS_ALLOW_CREDENTIALS', cast=bool, default=True)
+CORS_ALLOW_CREDENTIALS = config(
+    'CORS_ALLOW_CREDENTIALS', cast=bool, default=True)
 
 if not DEBUG:
     SESSION_COOKIE_SAMESITE = 'None'
@@ -66,6 +69,7 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'rest_framework',
     'music'
+
 ]
 
 MIDDLEWARE = [
@@ -79,7 +83,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
 
 
 ROOT_URLCONF = 'resoniq.urls'
