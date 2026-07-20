@@ -5,6 +5,8 @@ from .models import Room
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
 
 
 class RoomView(generics.ListAPIView):
@@ -150,3 +152,9 @@ class UpdateRoom(APIView):
             {'Bad Request': 'Invalid data...'},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+# Render Backend Cold Start 
+
+@require_http_methods(["GET"])
+def healthcheck(request):
+    return JsonResponse({"status": "ok"})
