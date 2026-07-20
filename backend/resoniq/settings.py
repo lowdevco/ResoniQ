@@ -196,3 +196,9 @@ LOGGING = {
         },
     },
 }
+
+# Session Cookies
+
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True  
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
