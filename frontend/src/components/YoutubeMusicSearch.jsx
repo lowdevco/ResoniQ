@@ -24,6 +24,7 @@ function YoutubeMusicSearch({
   syncedIsPlaying,
   isHost,
   guestCanPause,
+  inRoom,
 }) {
   const location = useLocation();
   const hideSearch = location.pathname.endsWith("/settings");
@@ -113,6 +114,22 @@ function YoutubeMusicSearch({
       if (interval) clearInterval(interval);
     };
   }, [isPlaying]);
+
+  useEffect(() => {
+    // Load default content on initial mount
+    const fetchDefault = async () => {
+      setLoading(true);
+      try {
+        const response = await apiFetch(`/music/search?q=Trending%20Music%20Hits`);
+        const data = await response.json();
+        setTracks(data);
+      } catch (err) {
+        console.error("Default search failed:", err);
+      }
+      setLoading(false);
+    };
+    fetchDefault();
+  }, []);
 
   const searchSongs = async () => {
     if (!query.trim()) return;

@@ -9,6 +9,8 @@ function useRoom(roomCode) {
   const [syncedIsPlaying, setSyncedIsPlaying] = useState(false);
 
   useEffect(() => {
+    if (!roomCode) return;
+    
     const baseWsUrl = WS_BASE_URL.replace(/^http/, "ws");
     let wsUrl = `${baseWsUrl}/ws/room/${roomCode}/`;
     const parts = wsUrl.split("://");
