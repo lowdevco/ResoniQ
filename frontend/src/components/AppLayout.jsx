@@ -7,8 +7,8 @@ import {
   FaSignOutAlt,
   FaCrown,
   FaHeadphones,
-  FaUserFriends,
-  FaCog
+  FaCog,
+  FaSearch
 } from "react-icons/fa";
 import YoutubeMusicSearch from "./YoutubeMusicSearch";
 import CreateRoom from "./CreateRoom";
@@ -23,8 +23,10 @@ function AppLayout() {
 
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const [activeSearchQuery, setActiveSearchQuery] = useState("");
 
-  const [isHost, setIsHost] = useState(!roomCode); // True by default in solo mode
+  const [isHost, setIsHost] = useState(!roomCode);
   const [guestCanPause, setGuestCanPause] = useState(false);
   const [voteToSkip, setVoteToSkip] = useState(2);
   const [copied, setCopied] = useState(false);
@@ -37,16 +39,14 @@ function AppLayout() {
     if (roomCode) {
       getRoomDetails();
     } else {
-      setIsHost(true); // Always host in solo mode
+      setIsHost(true);
     }
   }, [roomCode]);
 
   const getRoomDetails = () => {
     apiFetch(`/api/get-room?code=${roomCode}`)
       .then((response) => {
-        if (!response.ok) {
-          leaveRoom();
-        }
+        if (!response.ok) leaveRoom();
         return response.json();
       })
       .then((data) => {
@@ -59,19 +59,18 @@ function AppLayout() {
 
   const leaveRoom = () => {
     if (!roomCode) return;
-    
-    apiFetch("/api/leave-room", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-    }).then(() => {
-      navigate("/");
-    });
+    apiFetch("/api/leave-room", { method: "POST" }).then(() => navigate("/"));
   };
 
   const copyRoomCode = () => {
     navigator.clipboard.writeText(roomCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setActiveSearchQuery(searchInput);
   };
 
   const renderSidebarContent = () => {
@@ -134,35 +133,17 @@ function AppLayout() {
               </div>
               <div className="flex flex-col gap-4">
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-[#b3b3b3] font-bold">
-                    Votes to Skip
-                  </p>
-                  <p className="text-sm font-bold text-white mt-0.5">
-                    {voteToSkip}
-                  </p>
+                  <p className="text-[10px] uppercase tracking-wider text-[#b3b3b3] font-bold">Votes to Skip</p>
+                  <p className="text-sm font-bold text-white mt-0.5">{voteToSkip}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-[#b3b3b3] font-bold">
-                    Guest Controls
-                  </p>
-                  <p className="text-sm font-bold text-white mt-0.5">
-                    {guestCanPause ? "Play & Pause Allowed" : "Host Only"}
-                  </p>
+                  <p className="text-[10px] uppercase tracking-wider text-[#b3b3b3] font-bold">Guest Controls</p>
+                  <p className="text-sm font-bold text-white mt-0.5">{guestCanPause ? "Play & Pause Allowed" : "Host Only"}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-[#b3b3b3] font-bold">
-                    Your Role
-                  </p>
+                  <p className="text-[10px] uppercase tracking-wider text-[#b3b3b3] font-bold">Your Role</p>
                   <p className="text-sm font-bold text-brand mt-0.5 flex items-center gap-1.5">
-                    {isHost ? (
-                      <>
-                        <FaCrown /> Host
-                      </>
-                    ) : (
-                      <>
-                        <FaHeadphones /> Listener
-                      </>
-                    )}
+                    {isHost ? <><FaCrown /> Host</> : <><FaHeadphones /> Listener</>}
                   </p>
                 </div>
               </div>
@@ -174,67 +155,73 @@ function AppLayout() {
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-[#080808] font-sans selection:bg-brand/30 selection:text-white">
+    <div className="flex flex-col h-screen overflow-hidden bg-[#050505] font-sans selection:bg-brand/30 selection:text-white">
       {/* Top Navbar */}
-      <nav className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 bg-black border-b border-white/[0.05] z-40 shrink-0">
-        <div className="flex items-center gap-4">
+      <nav className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 bg-[#0a0a0a] border-b border-white/[0.05] z-40 shrink-0">
+        <div className="flex items-center gap-4 w-1/4">
           <button
             onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}
             className="hidden lg:block text-[#b3b3b3] hover:text-white transition duration-200 focus:outline-none"
           >
             <FaBars className="text-xl" />
           </button>
-          
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="lg:hidden text-[#b3b3b3] hover:text-white transition duration-200 focus:outline-none"
           >
             <FaBars className="text-xl" />
           </button>
-
-          <Link to="/" className="flex items-center gap-2 group cursor-pointer">
+          <Link to="/" className="flex items-center gap-2 group cursor-pointer" onClick={() => { setSearchInput(""); setActiveSearchQuery(""); }}>
             <div className="bg-brand text-white rounded-full p-2 flex items-center justify-center shadow-lg shadow-brand/20 group-hover:scale-105 transition-transform">
               <FaMusic className="text-sm sm:text-base" />
             </div>
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white group-hover:text-brand transition-colors">
+            <h1 className="hidden sm:block text-lg sm:text-xl font-bold tracking-tight text-white group-hover:text-brand transition-colors">
               Resoniq
             </h1>
           </Link>
+        </div>
+
+        {/* Central Search Bar */}
+        <form onSubmit={handleSearchSubmit} className="flex-1 max-w-lg mx-4 relative group">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#b3b3b3] group-focus-within:text-brand transition-colors">
+            <FaSearch />
+          </div>
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="What do you want to play?"
+            className="w-full bg-[#1a1a1a] hover:bg-[#222222] focus:bg-[#222222] border border-white/[0.05] focus:border-brand/50 rounded-full py-3 pl-11 pr-4 text-sm text-white placeholder-[#b3b3b3] focus:outline-none transition-all duration-200 shadow-inner"
+          />
+        </form>
+
+        <div className="w-1/4 flex justify-end">
+          {/* Empty space for future premium/profile buttons */}
         </div>
       </nav>
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
-          <div
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-            onClick={() => setMobileMenuOpen(false)}
-          />
-          <div className="relative w-72 bg-[#121212] h-full flex flex-col shadow-2xl overflow-y-auto animate-slide-in p-6">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
+          <div className="relative w-72 bg-[#0a0a0a] h-full flex flex-col shadow-2xl overflow-y-auto animate-slide-in p-6">
             <div className="flex items-center justify-between border-b border-white/[0.05] pb-4">
               <h2 className="text-white font-bold tracking-wider uppercase text-sm">
                 {roomCode ? "Room Settings" : "Menu"}
               </h2>
-              <button
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-[#b3b3b3] hover:text-white focus:outline-none"
-              >
+              <button onClick={() => setMobileMenuOpen(false)} className="text-[#b3b3b3] hover:text-white focus:outline-none">
                 <FaTimes className="text-lg" />
               </button>
             </div>
-            
             <div className="flex-1 mt-4">
-              {/* Force leftSidebarOpen to true for mobile rendering */}
               {React.cloneElement(renderSidebarContent(), { leftSidebarOpen: true })}
             </div>
-
             {roomCode && (
               <button
                 onClick={leaveRoom}
                 className="mt-6 w-full bg-transparent hover:bg-[#e91429]/10 border border-[#e91429] text-[#e91429] hover:text-white font-bold transition-all duration-150 py-3 rounded-full text-sm flex items-center justify-center gap-2 focus:outline-none"
               >
-                <FaSignOutAlt />
-                Leave Room
+                <FaSignOutAlt /> Leave Room
               </button>
             )}
           </div>
@@ -245,19 +232,16 @@ function AppLayout() {
       <div className="flex-1 w-full flex gap-2 p-2 pb-[88px] sm:pb-[104px] overflow-hidden min-h-0">
         {/* Left Sidebar */}
         <aside
-          className={`hidden lg:flex flex-col justify-between shrink-0 transition-all duration-300 bg-[#121212] border border-white/[0.04] rounded-xl overflow-y-auto overflow-x-hidden ${
+          className={`hidden lg:flex flex-col justify-between shrink-0 transition-all duration-300 bg-[#0a0a0a] rounded-xl overflow-y-auto overflow-x-hidden ${
             leftSidebarOpen ? "w-72 p-4" : "w-16 py-4 px-2 items-center"
           }`}
         >
           {renderSidebarContent()}
-
           {roomCode && (
             <button
               onClick={leaveRoom}
               className={`bg-transparent hover:bg-[#e91429]/10 border border-[#e91429] text-[#e91429] hover:text-white font-bold transition-all duration-150 focus:outline-none flex items-center justify-center ${
-                leftSidebarOpen
-                  ? "w-full py-2.5 rounded-full text-sm gap-2 mt-4"
-                  : "w-10 h-10 rounded-full text-lg mt-4"
+                leftSidebarOpen ? "w-full py-2.5 rounded-full text-sm gap-2 mt-4" : "w-10 h-10 rounded-full text-lg mt-4"
               }`}
               title="Leave Room"
             >
@@ -268,10 +252,10 @@ function AppLayout() {
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 bg-[#121212] border border-white/[0.04] rounded-xl overflow-y-auto px-6 pb-6 min-h-0 relative">
-          <div className="max-w-5xl mx-auto flex flex-col gap-6">
+        <main className="flex-1 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/15 via-[#0a0a0a] to-[#0a0a0a] rounded-xl overflow-y-auto min-h-0 relative">
+          <div className="max-w-[1400px] mx-auto flex flex-col gap-6 p-6">
             {roomCode && isSettingsPage && isHost && (
-              <div className="animate-fade-in pt-6">
+              <div className="animate-fade-in mb-4">
                 <CreateRoom
                   update={true}
                   voteToSkip={voteToSkip}
@@ -290,6 +274,7 @@ function AppLayout() {
               isHost={isHost}
               guestCanPause={guestCanPause}
               inRoom={!!roomCode}
+              activeSearchQuery={activeSearchQuery}
             />
           </div>
         </main>

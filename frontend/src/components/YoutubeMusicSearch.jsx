@@ -5,7 +5,6 @@ import {
   FaPlay,
   FaPause,
   FaMusic,
-  FaSearch,
   FaVolumeUp,
   FaVolumeDown,
   FaVolumeOff,
@@ -25,11 +24,11 @@ function YoutubeMusicSearch({
   isHost,
   guestCanPause,
   inRoom,
+  activeSearchQuery,
 }) {
   const location = useLocation();
   const hideSearch = location.pathname.endsWith("/settings");
 
-  const [query, setQuery] = useState("");
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(null);
@@ -44,59 +43,30 @@ function YoutubeMusicSearch({
 
   const playerRef = useRef(null);
 
-  const getPlayerVideoId = () => {
-    if (
-      playerRef.current &&
-      typeof playerRef.current.getVideoData === "function"
-    ) {
-      const data = playerRef.current.getVideoData();
-      return data ? data.video_id : null;
-    }
-    return null;
-  };
-
   useEffect(() => {
     if (!syncedTrack) {
       if (currentTrack) {
         setCurrentTrack(null);
         setIsPlaying(false);
         setCurrentTime(0);
+        setDuration(0);
+        if (playerRef.current) {
+          playerRef.current.stopVideo();
+        }
       }
       return;
     }
 
-    const isDifferentTrack =
-      !currentTrack || currentTrack.videoId !== syncedTrack.videoId;
-    if (isDifferentTrack) {
+    if (
+      !currentTrack ||
+      currentTrack.videoId !== syncedTrack.videoId ||
+      Math.abs(currentTime - syncedTime) > 2
+    ) {
       setCurrentTrack(syncedTrack);
-      setCurrentTime(0);
+      setCurrentTime(syncedTime);
     }
-
-    if (!playerRef.current) return;
-
-    const currentPlayerVideoId = getPlayerVideoId();
-    if (currentPlayerVideoId === syncedTrack.videoId) {
-      const playerState = playerRef.current.getPlayerState();
-
-      if (syncedIsPlaying) {
-        if (playerState !== 1) {
-          playerRef.current.playVideo();
-          setIsPlaying(true);
-        }
-      } else {
-        if (playerState === 1) {
-          playerRef.current.pauseVideo();
-          setIsPlaying(false);
-        }
-      }
-
-      const playerTime = playerRef.current.getCurrentTime();
-      if (Math.abs(playerTime - syncedTime) > 2) {
-        playerRef.current.seekTo(syncedTime, true);
-        setCurrentTime(syncedTime);
-      }
-    }
-  }, [syncedTrack, syncedTime, syncedIsPlaying, currentTrack]);
+    setIsPlaying(syncedIsPlaying);
+  }, [syncedTrack, syncedTime, syncedIsPlaying]);
 
   useEffect(() => {
     let interval;
@@ -115,41 +85,42 @@ function YoutubeMusicSearch({
     };
   }, [isPlaying]);
 
-  useEffect(() => {
-    // Load default content on initial mount
-    const fetchDefault = async () => {
-      setLoading(true);
-      try {
-        const response = await apiFetch(`/music/search?q=Trending%20Music%20Hits`);
-        const data = await response.json();
-        setTracks(data);
-      } catch (err) {
-        console.error("Default search failed:", err);
-      }
-      setLoading(false);
-    };
-    fetchDefault();
-  }, []);
-
-  const searchSongs = async () => {
-    if (!query.trim()) return;
-
+  const fetchDefault = async () => {
     setLoading(true);
     try {
-      const response = await apiFetch(
-        `/music/search?q=${encodeURIComponent(query)}`,
-      );
+      const response = await apiFetch(`/music/search?q=Trending%20Music%20Hits`);
       const data = await response.json();
       setTracks(data);
     } catch (err) {
-      console.error("Search failed:", err);
+      console.error("Default search failed:", err);
     }
     setLoading(false);
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") searchSongs();
-  };
+  useEffect(() => {
+    fetchDefault();
+  }, []);
+
+  useEffect(() => {
+    const fetchSearch = async () => {
+      if (!activeSearchQuery?.trim()) {
+        fetchDefault();
+        return;
+      }
+      setLoading(true);
+      try {
+        const response = await apiFetch(
+          `/music/search?q=${encodeURIComponent(activeSearchQuery)}`
+        );
+        const data = await response.json();
+        setTracks(data);
+      } catch (err) {
+        console.error("Search failed:", err);
+      }
+      setLoading(false);
+    };
+    fetchSearch();
+  }, [activeSearchQuery]);
 
   const playTrack = (track) => {
     if (!isHost) return;
@@ -212,21 +183,6 @@ function YoutubeMusicSearch({
     });
   };
 
-  const restartSong = () => {
-    if (!isHost) return;
-    if (!playerRef.current) return;
-
-    playerRef.current.seekTo(0, true);
-    setCurrentTime(0);
-
-    sendMessage({
-      type: "seek_song",
-      track: currentTrack,
-      currentTime: 0,
-      isPlaying: isPlaying,
-    });
-  };
-
   const playNextTrack = () => {
     if (!isHost) return;
     if (tracks.length === 0) return;
@@ -236,7 +192,7 @@ function YoutubeMusicSearch({
       nextIndex = Math.floor(Math.random() * tracks.length);
     } else if (currentTrack) {
       const currentIndex = tracks.findIndex(
-        (t) => t.videoId === currentTrack.videoId,
+        (t) => t.videoId === currentTrack.videoId
       );
       if (currentIndex !== -1 && currentIndex < tracks.length - 1) {
         nextIndex = currentIndex + 1;
@@ -252,42 +208,21 @@ function YoutubeMusicSearch({
     let prevIndex = 0;
     if (currentTrack) {
       const currentIndex = tracks.findIndex(
-        (t) => t.videoId === currentTrack.videoId,
+        (t) => t.videoId === currentTrack.videoId
       );
-      if (currentIndex !== -1 && currentIndex > 0) {
+      if (currentIndex > 0) {
         prevIndex = currentIndex - 1;
-      } else {
-        restartSong();
-        return;
       }
     }
     playTrack(tracks[prevIndex]);
   };
 
-  const stopSong = () => {
-    if (!isHost) return;
-    if (!playerRef.current) return;
-
-    playerRef.current.pauseVideo();
-    playerRef.current.seekTo(0, true);
-    setIsPlaying(false);
-    setCurrentTime(0);
-    setCurrentTrack(null);
-
-    sendMessage({
-      type: "pause_song",
-      track: null,
-      currentTime: 0,
-      isPlaying: false,
-    });
-  };
-
   const handleVolumeChange = (e) => {
-    const newVol = parseInt(e.target.value);
-    setVolume(newVol);
+    const val = parseFloat(e.target.value);
+    setVolume(val);
     if (playerRef.current) {
-      playerRef.current.setVolume(newVol);
-      if (newVol > 0 && isMuted) {
+      playerRef.current.setVolume(val);
+      if (val > 0 && isMuted) {
         playerRef.current.unMute();
         setIsMuted(false);
       }
@@ -296,7 +231,7 @@ function YoutubeMusicSearch({
 
   const toggleMute = () => {
     if (!playerRef.current) return;
-    if (isMuted) {
+    if (isMuted || volume === 0) {
       playerRef.current.unMute();
       setIsMuted(false);
       playerRef.current.setVolume(volume);
@@ -309,7 +244,6 @@ function YoutubeMusicSearch({
   const onReady = (event) => {
     playerRef.current = event.target;
     setDuration(event.target.getDuration());
-
     event.target.setVolume(isMuted ? 0 : volume);
 
     if (syncedTrack) {
@@ -375,103 +309,94 @@ function YoutubeMusicSearch({
   const canControl = isHost || guestCanPause;
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-full h-full pb-24">
       {!hideSearch && (
-        <div className="flex flex-col w-full">
-          <div className="sticky top-0 bg-[#121212] z-10 pt-6 pb-4 border-b border-white/[0.06] mb-4">
-            <h3 className="text-white font-bold text-xl flex items-center gap-2 mb-4">
-              <FaSearch className="text-brand text-base shrink-0" /> Discover
-              Tracks
-            </h3>
+        <div className="flex flex-col w-full px-4 sm:px-8 pt-8">
+          <h2 className="text-white font-bold text-2xl mb-6 tracking-tight">
+            {activeSearchQuery ? "Search Results" : "Trending Now"}
+          </h2>
 
-            {isHost && (
-              <div className="relative flex w-full">
-                <button
-                  onClick={searchSongs}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-[#b3b3b3] hover:text-white transition duration-150 focus:outline-none"
-                  title="Search"
-                >
-                  <FaSearch className="text-sm" />
-                </button>
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={
-                    loading ? "Searching..." : "Search YouTube Music..."
-                  }
-                  className="w-full bg-[#2a2a2a] border border-transparent text-white rounded-full pl-11 pr-5 py-2.5 focus:outline-none focus:bg-[#333333] focus:border-white/10 transition duration-150 text-sm"
-                />
-              </div>
-            )}
-
-            {!isHost && (
-              <div className="bg-black/30 border border-white/[0.04] rounded-xl px-4 py-3 flex items-center justify-center gap-2.5">
-                <FaMusic className="text-brand text-sm shrink-0" />
-                <p className="text-[#b3b3b3] text-sm font-medium">
-                  Only the host can search and play songs
-                  {guestCanPause && " — You can play & pause"}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {isHost && tracks.length > 0 && (
-            <div className="flex flex-col gap-1 mt-2">
-              {tracks.map((track, index) => (
-                <div
-                  key={track.videoId}
-                  onClick={() => playTrack(track)}
-                  className={`group flex items-center gap-4 px-4 py-3 rounded-xl cursor-pointer transition-all duration-150 ${
-                    currentTrack?.videoId === track.videoId
-                      ? "bg-white/[0.08]"
-                      : "bg-transparent hover:bg-white/[0.04]"
-                  }`}
-                >
-                  <div className="w-6 text-center text-sm font-semibold text-[#b3b3b3] relative flex items-center justify-center">
-                    <span className="group-hover:hidden">{index + 1}</span>
-                    <FaPlay className="hidden group-hover:inline text-brand text-[10px]" />
-                  </div>
-
-                  <img
-                    src={track.thumbnail}
-                    alt={track.title}
-                    className="w-11 h-11 rounded-lg object-cover shadow-sm bg-black border border-white/5"
-                  />
-
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className={`font-semibold text-sm truncate ${
-                        currentTrack?.videoId === track.videoId
-                          ? "text-brand"
-                          : "text-white"
-                      }`}
-                    >
-                      {track.title}
-                    </p>
-                    <p className="text-[#b3b3b3] text-xs truncate mt-0.5">
-                      {track.artist}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-[#b3b3b3] text-xs font-semibold">
-                    <span>{track.duration}</span>
-                  </div>
-                </div>
-              ))}
+          {!isHost && inRoom && (
+            <div className="bg-black/30 border border-white/[0.04] rounded-xl px-4 py-3 flex items-center gap-3 mb-6 w-max">
+              <FaMusic className="text-brand text-sm shrink-0" />
+              <p className="text-[#b3b3b3] text-sm font-medium">
+                Only the host can change songs
+                {guestCanPause && " — You can play & pause"}
+              </p>
             </div>
           )}
 
-          {isHost && tracks.length === 0 && query && !loading && (
-            <p className="text-[#b3b3b3] text-sm text-center py-8">
-              No results found. Try another search query!
-            </p>
+          {loading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+              {[...Array(10)].map((_, i) => (
+                <div key={i} className="animate-pulse flex flex-col gap-3">
+                  <div className="w-full aspect-square bg-white/5 rounded-md"></div>
+                  <div className="h-4 bg-white/5 rounded w-3/4"></div>
+                  <div className="h-3 bg-white/5 rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              {tracks.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                  {tracks.map((track) => (
+                    <div
+                      key={track.videoId}
+                      onClick={() => playTrack(track)}
+                      className={`group flex flex-col p-4 rounded-xl cursor-pointer transition-all duration-300 hover:bg-white/[0.04] ${
+                        currentTrack?.videoId === track.videoId ? "bg-white/[0.08]" : "bg-[#181818]/60"
+                      }`}
+                    >
+                      <div className="relative w-full aspect-square mb-4 shadow-lg overflow-hidden rounded-md bg-[#282828]">
+                        <img
+                          src={track.thumbnail}
+                          alt={track.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        {/* Hover Play Button Overlay */}
+                        <div
+                          className={`absolute bottom-2 right-2 bg-brand text-white w-12 h-12 rounded-full flex items-center justify-center shadow-xl shadow-brand/40 transition-all duration-300 transform ${
+                            currentTrack?.videoId === track.videoId && isPlaying
+                              ? "opacity-100 translate-y-0"
+                              : "opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0"
+                          } hover:scale-105 hover:bg-blue-500`}
+                        >
+                          {currentTrack?.videoId === track.videoId && isPlaying ? (
+                            <FaPause className="text-lg" />
+                          ) : (
+                            <FaPlay className="text-lg ml-1" />
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <p
+                          className={`font-bold text-base truncate mb-1 transition-colors ${
+                            currentTrack?.videoId === track.videoId ? "text-brand" : "text-white"
+                          }`}
+                        >
+                          {track.title}
+                        </p>
+                        <p className="text-[#a7a7a7] text-sm font-medium truncate">
+                          {track.artist}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[#b3b3b3] text-sm py-8">
+                  No results found. Try another search query!
+                </p>
+              )}
+            </>
           )}
         </div>
       )}
 
-      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-white/[0.05] px-6 py-4 flex items-center justify-between z-50 h-20 sm:h-24">
+      {/* Persistent Bottom Player */}
+      <div className="fixed bottom-0 left-0 right-0 bg-[#0a0a0a] border-t border-white/[0.05] px-4 sm:px-6 py-4 flex items-center justify-between z-50 h-[90px]">
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#282828] sm:hidden">
           {currentTrack && (
             <div
@@ -481,104 +406,80 @@ function YoutubeMusicSearch({
           )}
         </div>
 
-        <div className="flex items-center gap-3 w-2/3 sm:w-1/4 min-w-0">
+        <div className="flex items-center gap-4 w-1/3 min-w-0">
           {currentTrack ? (
             <>
               <img
                 src={currentTrack.thumbnail}
                 alt={currentTrack.title}
-                className="w-11 sm:w-14 sm:h-14 rounded-lg object-cover shadow-lg border border-white/5 bg-black shrink-0"
+                className="w-14 h-14 rounded shadow-lg border border-white/5 bg-black shrink-0"
               />
-              <div className="min-w-0">
-                <h4
-                  className="text-white font-semibold text-xs sm:text-sm truncate"
-                  title={currentTrack.title}
-                >
+              <div className="min-w-0 hidden sm:flex flex-col justify-center">
+                <h4 className="text-white font-bold text-sm truncate hover:underline cursor-pointer" title={currentTrack.title}>
                   {currentTrack.title}
                 </h4>
-                <p
-                  className="text-[#b3b3b3] text-[10px] sm:text-xs truncate mt-0.5"
-                  title={currentTrack.artist}
-                >
+                <p className="text-[#b3b3b3] text-[11px] font-medium truncate hover:underline cursor-pointer" title={currentTrack.artist}>
                   {currentTrack.artist}
                 </p>
               </div>
             </>
           ) : (
             <>
-              <div className="w-11 sm:w-14 sm:h-14 rounded-lg bg-[#2a2a2a] border border-[#282828] flex items-center justify-center shrink-0">
-                <FaMusic className="text-[#535353] text-sm sm:text-lg" />
+              <div className="w-14 h-14 rounded bg-[#1f1f1f] border border-white/[0.04] flex items-center justify-center shrink-0">
+                <FaMusic className="text-[#535353] text-lg" />
               </div>
-              <div className="min-w-0">
-                <h4 className="text-[#b3b3b3] font-semibold text-xs sm:text-sm truncate">
-                  No active track
-                </h4>
-                <p className="text-[#535353] text-[10px] sm:text-xs truncate mt-0.5">
-                  Select a song to start listening
-                </p>
+              <div className="min-w-0 hidden sm:flex flex-col justify-center">
+                <h4 className="text-[#b3b3b3] font-bold text-sm truncate">No active track</h4>
+                <p className="text-[#535353] text-[11px] font-medium truncate">Select a song to start</p>
               </div>
             </>
           )}
         </div>
 
-        <div className="flex flex-col items-center gap-2 w-1/3 sm:w-2/4">
-          <div className="flex items-center gap-4 sm:gap-6 justify-end sm:justify-center w-full select-none">
+        <div className="flex flex-col items-center gap-1.5 w-1/3 max-w-[722px]">
+          <div className="flex items-center gap-5 sm:gap-6 justify-center w-full select-none">
             <button
               onClick={() => setIsShuffle(!isShuffle)}
               disabled={!currentTrack}
-              className={`transition duration-150 text-sm sm:text-base focus:outline-none disabled:opacity-30 disabled:hover:text-[#b3b3b3] ${
-                isShuffle
-                  ? "text-brand hover:text-brand-hover"
-                  : "text-[#b3b3b3] hover:text-white"
+              className={`transition duration-150 focus:outline-none disabled:opacity-30 ${
+                isShuffle ? "text-brand hover:text-brand-hover" : "text-[#b3b3b3] hover:text-white"
               }`}
-              title="Shuffle"
             >
-              <FaRandom />
+              <FaRandom className="text-sm" />
             </button>
-
             <button
               onClick={playPrevTrack}
               disabled={!currentTrack || !isHost}
-              className="text-[#b3b3b3] hover:text-white disabled:opacity-30 disabled:hover:text-[#b3b3b3] transition duration-150 text-sm sm:text-base focus:outline-none"
-              title="Previous"
+              className="text-[#b3b3b3] hover:text-white disabled:opacity-30 transition duration-150 focus:outline-none"
             >
-              <FaStepBackward />
+              <FaStepBackward className="text-lg" />
             </button>
-
             <button
               onClick={togglePlayPause}
               disabled={!currentTrack || !canControl}
-              className="bg-white hover:scale-105 disabled:opacity-30 disabled:scale-100 disabled:cursor-not-allowed text-black w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm shadow-md transition duration-150 focus:outline-none shrink-0"
-              title={isPlaying ? "Pause" : "Play"}
+              className="bg-white hover:scale-105 disabled:opacity-30 disabled:scale-100 disabled:cursor-not-allowed text-black w-9 h-9 rounded-full flex items-center justify-center transition duration-150 focus:outline-none shrink-0 shadow-md"
             >
-              {isPlaying ? <FaPause /> : <FaPlay />}
+              {isPlaying ? <FaPause className="text-sm" /> : <FaPlay className="text-sm ml-0.5" />}
             </button>
-
             <button
               onClick={playNextTrack}
               disabled={!currentTrack || !isHost}
-              className="text-[#b3b3b3] hover:text-white disabled:opacity-30 disabled:hover:text-[#b3b3b3] transition duration-150 text-sm sm:text-base focus:outline-none"
-              title="Next"
+              className="text-[#b3b3b3] hover:text-white disabled:opacity-30 transition duration-150 focus:outline-none"
             >
-              <FaStepForward />
+              <FaStepForward className="text-lg" />
             </button>
-
             <button
               onClick={() => setIsRepeat(!isRepeat)}
               disabled={!currentTrack}
-              className={`transition duration-150 text-sm sm:text-base focus:outline-none disabled:opacity-30 disabled:hover:text-[#b3b3b3] ${
-                isRepeat
-                  ? "text-brand hover:text-brand-hover"
-                  : "text-[#b3b3b3] hover:text-white"
+              className={`transition duration-150 focus:outline-none disabled:opacity-30 ${
+                isRepeat ? "text-brand hover:text-brand-hover" : "text-[#b3b3b3] hover:text-white"
               }`}
-              title="Repeat"
             >
-              <FaSync />
+              <FaSync className="text-sm" />
             </button>
           </div>
-
-          <div className="hidden sm:flex w-full items-center gap-3">
-            <span className="text-[10px] text-[#b3b3b3] font-mono w-10 text-right shrink-0">
+          <div className="hidden sm:flex w-full items-center gap-2">
+            <span className="text-[11px] text-[#a7a7a7] font-mono min-w-[40px] text-right shrink-0">
               {formatTime(currentTime)}
             </span>
             <input
@@ -588,32 +489,22 @@ function YoutubeMusicSearch({
               value={currentTime}
               onChange={handleSliderChange}
               disabled={!isHost || !currentTrack}
-              className="flex-1 h-1 bg-[#535353] rounded-lg appearance-none cursor-pointer accent-brand disabled:opacity-30 focus:outline-none transition"
+              className="flex-1 h-1 bg-[#4d4d4d] rounded-full appearance-none cursor-pointer accent-white hover:accent-brand disabled:opacity-30 focus:outline-none transition group-hover:bg-[#535353]"
             />
-            <span className="text-[10px] text-[#b3b3b3] font-mono w-10 text-left shrink-0">
+            <span className="text-[11px] text-[#a7a7a7] font-mono min-w-[40px] text-left shrink-0">
               {formatTime(duration)}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 w-1/4 shrink-0">
+        <div className="flex items-center justify-end gap-3 w-1/3 shrink-0">
           <button
             onClick={toggleMute}
             disabled={!currentTrack}
-            className="text-[#b3b3b3] hover:text-white transition duration-150 text-base focus:outline-none disabled:opacity-30 flex items-center justify-center"
-            title={isMuted ? "Unmute" : "Mute"}
+            className="text-[#b3b3b3] hover:text-white transition duration-150 focus:outline-none disabled:opacity-30"
           >
-            {isMuted || volume === 0 ? (
-              <FaVolumeMute />
-            ) : volume < 33 ? (
-              <FaVolumeOff />
-            ) : volume < 66 ? (
-              <FaVolumeDown />
-            ) : (
-              <FaVolumeUp />
-            )}
+            {isMuted || volume === 0 ? <FaVolumeMute /> : volume < 33 ? <FaVolumeOff /> : volume < 66 ? <FaVolumeDown /> : <FaVolumeUp />}
           </button>
-
           <input
             type="range"
             min="0"
@@ -621,8 +512,7 @@ function YoutubeMusicSearch({
             value={isMuted ? 0 : volume}
             onChange={handleVolumeChange}
             disabled={!currentTrack}
-            className="w-20 sm:w-24 h-1 bg-[#535353] rounded-lg appearance-none cursor-pointer accent-white disabled:opacity-30 focus:outline-none transition"
-            title="Volume"
+            className="w-24 hidden sm:block h-1 bg-[#4d4d4d] rounded-full appearance-none cursor-pointer accent-white hover:accent-brand disabled:opacity-30 focus:outline-none transition"
           />
         </div>
       </div>
