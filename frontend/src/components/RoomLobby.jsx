@@ -42,7 +42,7 @@ function RoomLobby() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        vote_to_skip: voteToSkip,
+        vote_to_skip: guestCanPause ? 1 : 9999,
         guest_can_pause: guestCanPause,
       }),
     })
@@ -118,52 +118,36 @@ function RoomLobby() {
         <form onSubmit={handleCreate} className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <label className="text-[10px] uppercase tracking-wider text-[#b3b3b3] font-bold mb-0.5">
-              Guest Playback Control
+              Room Mode
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col gap-2">
               <button
                 type="button"
                 onClick={() => setGuestCanPause(true)}
-                className={`flex flex-col p-2 rounded-lg border text-center transition duration-150 items-center justify-center focus:outline-none ${
+                className={`flex flex-col p-3 rounded-lg border text-center transition duration-150 items-center justify-center focus:outline-none ${
                   guestCanPause
-                    ? "bg-brand/10 border-brand text-white"
-                    : "bg-[#2a2a2a] border-transparent text-[#b3b3b3] hover:border-white/10"
+                    ? "bg-brand/10 border-brand"
+                    : "bg-[#2a2a2a] border-transparent hover:border-white/10"
                 }`}
               >
-                <FaUnlock className="text-sm mb-1" />
-                <span className="text-[10px] font-bold">Play / Pause</span>
+                <FaUnlock className={`text-base mb-1 ${guestCanPause ? 'text-brand' : 'text-[#b3b3b3]'}`} />
+                <span className={`text-[11px] font-bold mb-0.5 ${guestCanPause ? 'text-white' : 'text-[#b3b3b3]'}`}>Open Party</span>
+                <span className={`text-[9px] ${guestCanPause ? 'text-brand' : 'text-[#535353]'}`}>Guests can search, play, and skip</span>
               </button>
               <button
                 type="button"
                 onClick={() => setGuestCanPause(false)}
-                className={`flex flex-col p-2 rounded-lg border text-center transition duration-150 items-center justify-center focus:outline-none ${
+                className={`flex flex-col p-3 rounded-lg border text-center transition duration-150 items-center justify-center focus:outline-none ${
                   !guestCanPause
-                    ? "bg-brand/10 border-brand text-white"
-                    : "bg-[#2a2a2a] border-transparent text-[#b3b3b3] hover:border-white/10"
+                    ? "bg-brand/10 border-brand"
+                    : "bg-[#2a2a2a] border-transparent hover:border-white/10"
                 }`}
               >
-                <FaLock className="text-sm mb-1" />
-                <span className="text-[10px] font-bold">Host Only</span>
+                <FaLock className={`text-base mb-1 ${!guestCanPause ? 'text-brand' : 'text-[#b3b3b3]'}`} />
+                <span className={`text-[11px] font-bold mb-0.5 ${!guestCanPause ? 'text-white' : 'text-[#b3b3b3]'}`}>Listening Party</span>
+                <span className={`text-[9px] ${!guestCanPause ? 'text-brand' : 'text-[#535353]'}`}>Host-only control. Immersive view.</span>
               </button>
             </div>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <div className="flex justify-between items-center">
-              <label className="text-[10px] uppercase tracking-wider text-[#b3b3b3] font-bold">
-                Votes to Skip
-              </label>
-              <span className="bg-[#0b0b0b] px-1.5 py-0.5 rounded text-[10px] font-bold text-brand border border-white/[0.04]">
-                {voteToSkip}
-              </span>
-            </div>
-            <input
-              type="range"
-              min="1"
-              max="10"
-              value={voteToSkip}
-              onChange={(e) => setVoteToSkip(parseInt(e.target.value))}
-              className="w-full h-1 bg-[#535353] rounded-lg appearance-none cursor-pointer accent-brand"
-            />
           </div>
           <button
             type="submit"

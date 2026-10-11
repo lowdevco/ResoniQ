@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   FaMusic,
   FaBars,
@@ -8,7 +8,8 @@ import {
   FaCrown,
   FaHeadphones,
   FaCog,
-  FaSearch
+  FaSearch,
+  FaUserFriends
 } from "react-icons/fa";
 import YoutubeMusicSearch from "./YoutubeMusicSearch";
 import CreateRoom from "./CreateRoom";
@@ -19,12 +20,12 @@ import { apiFetch } from "../api";
 function AppLayout() {
   const { roomCode } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [activeSearchQuery, setActiveSearchQuery] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
 
   const [isHost, setIsHost] = useState(!roomCode);
   const [guestCanPause, setGuestCanPause] = useState(false);
@@ -33,13 +34,12 @@ function AppLayout() {
 
   const { userCount, syncedTrack, syncedTime, syncedIsPlaying, sendMessage } = useRoom(roomCode);
 
-  const isSettingsPage = location.pathname.endsWith("/settings");
-
   useEffect(() => {
     if (roomCode) {
       getRoomDetails();
     } else {
       setIsHost(true);
+      setShowSettings(false);
     }
   }, [roomCode]);
 
@@ -68,16 +68,94 @@ function AppLayout() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 555);
+
+  useEffect(() => {
+    const handleResize = () => setIsSmallScreen(window.innerWidth < 555);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     setActiveSearchQuery(searchInput);
   };
 
-  const renderSidebarContent = () => {
+  const renderSidebarContent = (isExpanded = leftSidebarOpen) => {
+    if (!isExpanded) {
+      return (
+        <div className="flex flex-col gap-8 w-full items-center mt-6">
+          <Link to="/" className="text-[#b3b3b3] hover:text-white transition group" title="Home" onClick={() => { setSearchInput(""); setActiveSearchQuery(""); setShowSettings(false); }}>
+            <FaMusic className="text-xl group-hover:text-brand" />
+          </Link>
+          <button className="text-[#b3b3b3] hover:text-white transition" title="Search" onClick={() => document.querySelector('input[type="text"]')?.focus()}>
+            <FaSearch className="text-xl" />
+          </button>
+          
+          {roomCode && (
+            <div className="flex flex-col gap-8 items-center mt-2 pt-8 border-t border-white/[0.05] w-full">
+              <div className="flex flex-col items-center gap-1.5 text-[#b3b3b3] group" title="Active Listeners">
+                <div className="relative">
+                  <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-brand"></span>
+                  </span>
+                  <FaUserFriends className="text-xl group-hover:text-white transition" />
+                </div>
+                <span className="text-[10px] font-bold mt-1">{userCount}</span>
+              </div>
+              
+              <div className="flex flex-col items-center gap-1.5 text-brand" title={isHost ? "Host" : "Listener"}>
+                {isHost ? <FaCrown className="text-xl" /> : <FaHeadphones className="text-xl" />}
+              </div>
+
+              {isHost && (
+                <button className="text-[#b3b3b3] hover:text-white transition mt-2" title="Room Settings" onClick={() => { setLeftSidebarOpen(true); setShowSettings(true); }}>
+                  <FaCog className="text-xl" />
+                </button>
+              )}
+            </div>
+          )}
+          
+          {roomCode && (
+             <button
+                onClick={leaveRoom}
+                className="mt-auto pt-8 text-[#e91429]/70 hover:text-[#e91429] transition" title="Leave Room"
+             >
+                <FaSignOutAlt className="text-xl" />
+             </button>
+          )}
+        </div>
+      );
+    }
+
     if (!roomCode) {
       return (
         <div className="flex flex-col gap-6 w-full mt-4">
-          {leftSidebarOpen && <RoomLobby />}
+          <RoomLobby />
+        </div>
+      );
+    }
+
+    if (showSettings && isHost && leftSidebarOpen) {
+      return (
+        <div className="flex flex-col gap-6 w-full animate-fade-in mt-4">
+          <div className="flex items-center justify-between border-b border-white/[0.05] pb-3">
+             <h3 className="font-bold text-xs uppercase tracking-wider text-brand">Room Settings</h3>
+             <button onClick={() => setShowSettings(false)} className="text-[#b3b3b3] hover:text-white transition">
+                <FaTimes />
+             </button>
+          </div>
+          <CreateRoom
+             update={true}
+             voteToSkip={voteToSkip}
+             guestCanPause={guestCanPause}
+             roomCode={roomCode}
+             updateCallback={() => {
+                getRoomDetails();
+                setShowSettings(false);
+             }}
+          />
         </div>
       );
     }
@@ -118,17 +196,17 @@ function AppLayout() {
             </div>
 
             <div className="bg-black/30 border border-white/[0.04] rounded-xl p-5 flex flex-col gap-4">
-              <div className="flex justify-between items-center border-b border-[#282828] pb-2">
+              <div className="flex justify-between items-center border-b border-[#282828] pb-3">
                 <h3 className="font-bold text-xs uppercase tracking-wider text-brand">
                   Session Rules
                 </h3>
                 {isHost && (
-                  <Link
-                    to={isSettingsPage ? `/room/${roomCode}` : `/room/${roomCode}/settings`}
+                  <button
+                    onClick={() => setShowSettings(true)}
                     className="text-[#b3b3b3] hover:text-white transition"
                   >
                     <FaCog />
-                  </Link>
+                  </button>
                 )}
               </div>
               <div className="flex flex-col gap-4">
@@ -148,6 +226,14 @@ function AppLayout() {
                 </div>
               </div>
             </div>
+
+            {/* Render Leave Room button natively at the bottom of the scrollable content */}
+            <button
+              onClick={leaveRoom}
+              className="mt-4 w-full bg-transparent hover:bg-[#e91429]/10 border border-[#e91429] text-[#e91429] hover:text-white font-bold transition-all duration-150 py-2.5 rounded-full text-sm flex items-center justify-center gap-2 focus:outline-none"
+            >
+              <FaSignOutAlt /> Leave Room
+            </button>
           </>
         )}
       </div>
@@ -157,8 +243,8 @@ function AppLayout() {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#050505] font-sans selection:bg-brand/30 selection:text-white">
       {/* Top Navbar */}
-      <nav className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 bg-[#0a0a0a] border-b border-white/[0.05] z-40 shrink-0">
-        <div className="flex items-center gap-4 w-1/4">
+      <nav className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 bg-[#0a0a0a] border-b border-white/[0.05] z-40 shrink-0 gap-2 sm:gap-4">
+        <div className="flex items-center gap-4 w-auto sm:w-1/4 shrink-0">
           <button
             onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}
             className="hidden lg:block text-[#b3b3b3] hover:text-white transition duration-200 focus:outline-none"
@@ -171,9 +257,9 @@ function AppLayout() {
           >
             <FaBars className="text-xl" />
           </button>
-          <Link to="/" className="flex items-center gap-2 group cursor-pointer" onClick={() => { setSearchInput(""); setActiveSearchQuery(""); }}>
-            <div className="bg-brand text-white rounded-full p-2 flex items-center justify-center shadow-lg shadow-brand/20 group-hover:scale-105 transition-transform">
-              <FaMusic className="text-sm sm:text-base" />
+          <Link to="/" className="flex items-center gap-2.5 group cursor-pointer" onClick={() => { setSearchInput(""); setActiveSearchQuery(""); setShowSettings(false); }}>
+            <div className="bg-white rounded-full p-1 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center shadow-lg shadow-white/10 group-hover:scale-105 transition-transform overflow-hidden shrink-0">
+              <img src="/logo.png" alt="Resoniq" className="w-full h-full object-contain rounded-full" />
             </div>
             <h1 className="hidden sm:block text-lg sm:text-xl font-bold tracking-tight text-white group-hover:text-brand transition-colors">
               Resoniq
@@ -182,21 +268,29 @@ function AppLayout() {
         </div>
 
         {/* Central Search Bar */}
-        <form onSubmit={handleSearchSubmit} className="flex-1 max-w-lg mx-4 relative group">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#b3b3b3] group-focus-within:text-brand transition-colors">
-            <FaSearch />
-          </div>
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="What do you want to play?"
-            className="w-full bg-[#1a1a1a] hover:bg-[#222222] focus:bg-[#222222] border border-white/[0.05] focus:border-brand/50 rounded-full py-3 pl-11 pr-4 text-sm text-white placeholder-[#b3b3b3] focus:outline-none transition-all duration-200 shadow-inner"
-          />
-        </form>
+        <div className="flex-1 max-w-lg mx-2 sm:mx-4 relative w-full flex justify-center">
+          {roomCode && !isHost && !guestCanPause ? (
+            <div className="bg-brand/10 border border-brand/30 text-brand text-xs sm:text-sm px-4 py-2 rounded-full font-bold tracking-wide flex items-center gap-2 animate-fade-in shadow-[0_0_15px_rgba(29,185,84,0.15)]">
+              <FaHeadphones /> Listening Party Mode
+            </div>
+          ) : (
+            <form onSubmit={handleSearchSubmit} className="relative group w-full">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#b3b3b3] group-focus-within:text-brand transition-colors">
+                <FaSearch />
+              </div>
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder={isSmallScreen ? "Search" : "What do you want to play?"}
+                className="w-full bg-[#1a1a1a] hover:bg-[#222222] focus:bg-[#222222] border border-white/[0.05] focus:border-brand/50 rounded-full py-2.5 sm:py-3 pl-11 pr-4 text-sm text-white placeholder-[#b3b3b3] focus:outline-none transition-all duration-200 shadow-inner"
+              />
+            </form>
+          )}
+        </div>
 
-        <div className="w-1/4 flex justify-end">
-          {/* Empty space for future premium/profile buttons */}
+        <div className="w-auto sm:w-1/4 flex justify-end shrink-0">
+          {/* Future premium/profile buttons */}
         </div>
       </nav>
 
@@ -205,25 +299,14 @@ function AppLayout() {
         <div className="fixed inset-0 z-50 lg:hidden flex">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
           <div className="relative w-72 bg-[#0a0a0a] h-full flex flex-col shadow-2xl overflow-y-auto animate-slide-in p-6">
-            <div className="flex items-center justify-between border-b border-white/[0.05] pb-4">
-              <h2 className="text-white font-bold tracking-wider uppercase text-sm">
-                {roomCode ? "Room Settings" : "Menu"}
-              </h2>
+            <div className="flex items-center justify-end pb-2">
               <button onClick={() => setMobileMenuOpen(false)} className="text-[#b3b3b3] hover:text-white focus:outline-none">
                 <FaTimes className="text-lg" />
               </button>
             </div>
-            <div className="flex-1 mt-4">
-              {React.cloneElement(renderSidebarContent(), { leftSidebarOpen: true })}
+            <div className="flex-1 mt-2">
+              {renderSidebarContent(true)}
             </div>
-            {roomCode && (
-              <button
-                onClick={leaveRoom}
-                className="mt-6 w-full bg-transparent hover:bg-[#e91429]/10 border border-[#e91429] text-[#e91429] hover:text-white font-bold transition-all duration-150 py-3 rounded-full text-sm flex items-center justify-center gap-2 focus:outline-none"
-              >
-                <FaSignOutAlt /> Leave Room
-              </button>
-            )}
           </div>
         </div>
       )}
@@ -237,35 +320,11 @@ function AppLayout() {
           }`}
         >
           {renderSidebarContent()}
-          {roomCode && (
-            <button
-              onClick={leaveRoom}
-              className={`bg-transparent hover:bg-[#e91429]/10 border border-[#e91429] text-[#e91429] hover:text-white font-bold transition-all duration-150 focus:outline-none flex items-center justify-center ${
-                leftSidebarOpen ? "w-full py-2.5 rounded-full text-sm gap-2 mt-4" : "w-10 h-10 rounded-full text-lg mt-4"
-              }`}
-              title="Leave Room"
-            >
-              <FaSignOutAlt />
-              {leftSidebarOpen && <span>Leave Room</span>}
-            </button>
-          )}
         </aside>
 
         {/* Main Content Area */}
         <main className="flex-1 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/15 via-[#0a0a0a] to-[#0a0a0a] rounded-xl overflow-y-auto min-h-0 relative">
           <div className="max-w-[1400px] mx-auto flex flex-col gap-6 p-6">
-            {roomCode && isSettingsPage && isHost && (
-              <div className="animate-fade-in mb-4">
-                <CreateRoom
-                  update={true}
-                  voteToSkip={voteToSkip}
-                  guestCanPause={guestCanPause}
-                  roomCode={roomCode}
-                  updateCallback={getRoomDetails}
-                />
-              </div>
-            )}
-
             <YoutubeMusicSearch
               sendMessage={sendMessage}
               syncedTrack={syncedTrack}

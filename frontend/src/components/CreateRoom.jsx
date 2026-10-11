@@ -27,7 +27,7 @@ function CreateRoom({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        vote_to_skip: voteToSkipState,
+        vote_to_skip: guestCanPauseState ? 1 : 9999,
         guest_can_pause: guestCanPauseState,
       }),
     };
@@ -44,7 +44,7 @@ function CreateRoom({
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        vote_to_skip: voteToSkipState,
+        vote_to_skip: guestCanPauseState ? 1 : 9999,
         guest_can_pause: guestCanPauseState,
         code: roomCode,
       }),
@@ -90,57 +90,37 @@ function CreateRoom({
 
       <div className="flex flex-col gap-2">
         <label className="text-xs uppercase tracking-wider text-[#b3b3b3] font-bold mb-1">
-          Guest Playback Control
+          Room Mode
         </label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-3">
           <button
             type="button"
             onClick={() => setGuestCanPause(true)}
-            className={`flex flex-col p-3 rounded-xl border text-center transition duration-150 items-center justify-center focus:outline-none ${
+            className={`flex flex-col p-4 rounded-xl border text-center transition duration-150 items-center justify-center focus:outline-none ${
               guestCanPauseState
-                ? "bg-brand/10 border-brand text-white"
-                : "bg-[#2a2a2a] border-transparent text-[#b3b3b3] hover:border-white/10"
+                ? "bg-brand/10 border-brand"
+                : "bg-[#2a2a2a] border-transparent hover:border-white/10"
             }`}
           >
-            <FaUnlock className="text-lg mb-1" />
-            <span className="text-xs font-bold">Play / Pause</span>
+            <FaUnlock className={`text-xl mb-2 ${guestCanPauseState ? 'text-brand' : 'text-[#b3b3b3]'}`} />
+            <span className={`text-sm font-bold mb-1 ${guestCanPauseState ? 'text-white' : 'text-[#b3b3b3]'}`}>Open Party</span>
+            <span className={`text-xs ${guestCanPauseState ? 'text-brand' : 'text-[#535353]'}`}>Guests can search, play, pause, and skip songs</span>
           </button>
 
           <button
             type="button"
             onClick={() => setGuestCanPause(false)}
-            className={`flex flex-col p-3 rounded-xl border text-center transition duration-150 items-center justify-center focus:outline-none ${
+            className={`flex flex-col p-4 rounded-xl border text-center transition duration-150 items-center justify-center focus:outline-none ${
               !guestCanPauseState
-                ? "bg-brand/10 border-brand text-white"
-                : "bg-[#2a2a2a] border-transparent text-[#b3b3b3] hover:border-white/10"
+                ? "bg-brand/10 border-brand"
+                : "bg-[#2a2a2a] border-transparent hover:border-white/10"
             }`}
           >
-            <FaLock className="text-lg mb-1" />
-            <span className="text-xs font-bold">Host Only</span>
+            <FaLock className={`text-xl mb-2 ${!guestCanPauseState ? 'text-brand' : 'text-[#b3b3b3]'}`} />
+            <span className={`text-sm font-bold mb-1 ${!guestCanPauseState ? 'text-white' : 'text-[#b3b3b3]'}`}>Listening Party (Host Only)</span>
+            <span className={`text-xs ${!guestCanPauseState ? 'text-brand' : 'text-[#535353]'}`}>Only you control music. Guests get an immersive Now Playing view</span>
           </button>
         </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <div className="flex justify-between items-center">
-          <label className="text-xs uppercase tracking-wider text-[#b3b3b3] font-bold">
-            Votes to Skip
-          </label>
-          <span className="bg-[#121212] px-2.5 py-0.5 rounded text-sm font-bold text-brand border border-[#282828]">
-            {voteToSkipState}
-          </span>
-        </div>
-        <input
-          type="range"
-          min="1"
-          max="10"
-          value={voteToSkipState}
-          onChange={handleVoteChange}
-          className="w-full h-1 bg-[#535353] rounded-lg appearance-none cursor-pointer accent-brand"
-        />
-        <span className="text-[10px] text-[#b3b3b3] text-center">
-          Number of user votes required to skip the active song
-        </span>
       </div>
 
       <button

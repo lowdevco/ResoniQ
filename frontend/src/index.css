@@ -24,23 +24,14 @@ html, body {
   flex-direction: column;
 }
 
-/* Custom styled scrollbars - Spotify Style */
+/* Hide scrollbar globally */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  display: none;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: hsla(0, 0%, 100%, 0.3);
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: hsla(0, 0%, 100%, 0.5);
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 /* Flat panel containers - Spotify Style */
