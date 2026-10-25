@@ -133,4 +133,6 @@ class Health(APIView):
     authentication_classes = []
 
     def get(self, request, format=None):
-        return Response({'status': 'ok'}, status=status.HTTP_200_OK)
+        response = Response({'status': 'ok'}, status=status.HTTP_200_OK)
+        response['Cache-Control'] = 'no-store'
+        return response
