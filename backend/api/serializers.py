@@ -1,18 +1,18 @@
 from rest_framework import serializers
+
 from .models import Room
 
 
 class Roomserializers(serializers.ModelSerializer):
     class Meta:
         model = Room
-        fields = ('id', 'code', 'host', 'guest_can_pause',
-                  'vote_to_skip', 'created_at')
+        fields = ('id', 'code', 'mode', 'created_at')
 
 
 class CreateRoomSerializers(serializers.ModelSerializer):
     class Meta:
         model = Room
-        fields = ('guest_can_pause', 'vote_to_skip')
+        fields = ('mode',)
 
 
 class UpdateRoomSerializers(serializers.ModelSerializer):
@@ -20,4 +20,4 @@ class UpdateRoomSerializers(serializers.ModelSerializer):
 
     class Meta:
         model = Room
-        fields = ('guest_can_pause', 'vote_to_skip', 'code')
+        fields = ('mode', 'code')

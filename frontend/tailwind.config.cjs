@@ -8,6 +8,7 @@ module.exports = {
           DEFAULT: "var(--brand-color)",
           hover: "var(--brand-color-hover)",
           glow: "var(--brand-color-glow)",
+          text: "var(--brand-color-text)",
         }
       }
     },

@@ -6,6 +6,7 @@
   --brand-color: #0070f3;
   --brand-color-hover: #005bc5;
   --brand-color-glow: rgba(0, 112, 243, 0.15);
+  --brand-color-text: #1a7ff5;
 }
 
 html, body {
@@ -122,4 +123,42 @@ input[type="range"]:hover::-webkit-slider-thumb {
 
 .animate-slide-left {
   animation: slide-left 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+
+:focus-visible {
+  outline: 2px solid var(--brand-color);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.range-wrap:has(input:focus-visible) {
+  outline: 2px solid var(--brand-color);
+  outline-offset: 4px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+}
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  background: var(--brand-color);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
