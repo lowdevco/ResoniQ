@@ -36,7 +36,7 @@ function useServerWake() {
     const ping = async () => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-      const response = await apiFetch("/api/health", { signal: controller.signal }).catch(() => null);
+      const response = await apiFetch(`/api/health?t=${Date.now()}`, { signal: controller.signal, cache: "no-store" }).catch(() => null);
       clearTimeout(timeout);
       if (response?.ok) {
         finish("ready");
